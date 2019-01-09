@@ -60,6 +60,8 @@ Le champ "mmap_addr" contient l'adresse du premier objet de type
 sur la mémoire.
 
 => Voir code
+   https://www.gnu.org/software/grub/manual/multiboot/multiboot.html
+   https://wiki.osdev.org/Detecting_Memory_(x86)
 
 
 3 - Vous allez découvrir différentes zones de mémoire physique,
