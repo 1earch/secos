@@ -44,6 +44,8 @@ endef
 %.o: %.s
 	@$(assemble)
 
+default: clean all
+
 all:$(TARGET)
 
 $(TARGET): $(objects)
