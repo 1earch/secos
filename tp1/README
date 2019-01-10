@@ -24,6 +24,13 @@ cette GDT. Que constatez-vous ?
 Servez-vous des outils présents dans notre OS (get_gdtr(), seg_desc_t
 et gdt_reg_t)
 
+=> 0: NULL
+   1: code XRA
+   2: data RWA
+   3: code CXRA
+   4: data RWA
+
+
 2 - Configurez votre propre GDT contenant des descripteurs ring 0:
  . code, 32 bits RX, flat, indice 1
  . données, 32 bits RW, flat, indice 2
