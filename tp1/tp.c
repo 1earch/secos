@@ -6,27 +6,10 @@
 
 extern info_t *info;
 
-/* Adds value, then tabulation(s) to debug buffer:
- *   - only 1 if only 8 chars
- *   - 2 if more than 8 chars
- */
-void tabulate_hex(uint32_t value)
-{
-  debug("0x%x", value);
-  if (value < 0x10000000)
-    debug("\t\t");
-  else
-    debug("\t");
-}
-void tabulate_dec(uint32_t value)
-{
-  debug("%d", value);
-  if (value < 10000000)
-    debug("\t\t");
-  else
-    debug("\t");
-}
+seg_desc_t GDT[3];
 
+#define code_index 1
+#define data_index 2
 
 
 /* Prints the current registered GDT. */
@@ -40,8 +23,6 @@ void print_gdt()
   debug("\nGDTR points on 0x%x (so GDT is here)\n", gdtr);
 
   // Print GDT content
-  debug("  i\tBASE\t\tLIMIT\t\tTYPE\n");
-
   n = gdtr.limit / sizeof(seg_desc_t);
   for (i=0; i <= n; i++)
   {
@@ -50,11 +31,62 @@ void print_gdt()
     uint32_t base  = (segm_desc->base_3 << 24)  | (segm_desc->base_2 << 16) | segm_desc->base_1;
     uint32_t limit = (segm_desc->limit_2 << 16) |  segm_desc->limit_1;
 
-    debug("  %d\t", i);
-    tabulate_hex(base);
-    tabulate_hex(limit);
-    debug("0x%x\n", segm_desc->type);
+    debug("  GDT[%d]: .raw= 0x%llx | .base= 0x%x | .limit=0x%x | .type= 0x%x\n",
+        i, segm_desc->raw, base, limit, segm_desc->type);
   }
+}
+
+
+/* Encode a GDT entry. */
+void encode_gdt_entry(seg_desc_t* desc, uint32_t base, uint32_t limit, uint64_t type, uint64_t dpl)
+{
+  desc->raw = 0ULL;
+
+  desc->base_1 = base & 0xFFFF;
+  desc->base_2 = (base >> 16) & 0xFFFF;
+  desc->base_3 = (base >> 24) & 0xFF;
+
+  desc->limit_1 = limit & 0xFFFF;
+  desc->limit_2 = (limit >> 16) & 0xF;
+
+  desc->type = type;  // Segment type
+  desc->dpl  = dpl;   // descriptor privilege level
+
+  desc->s = 1;        // 1, ie code or data
+  desc->p = 1;        // Segment present
+  desc->l = 0;        // Not 64-bit mode segment
+  desc->d = 1;        // 32-bit segment
+  desc->g = 1;        // Granularity => pages of 4kB
+  desc->avl = 0;      // Not available for use by system software
+}
+
+void init_gdt()
+{
+  gdt_reg_t gdtr;
+
+  // Fill GDT:
+  //   - Init null segment
+  GDT[0].raw = 0ULL;
+  //   - Init code segment (base=0, limit=max, type=code_xr, dpl=ring0)
+  encode_gdt_entry(&GDT[code_index], 0, 0xFFFFF, SEG_DESC_CODE_XR, 0);
+  //   - Init data segment (base=0, limit=max, type=data_rw, dpl=ring0)
+  encode_gdt_entry(&GDT[data_index], 0, 0xFFFFF, SEG_DESC_DATA_RW, 0);
+
+  // Configure gdtr new value
+  gdtr.limit = sizeof(GDT) - 1;
+  gdtr.desc  = GDT;
+
+  // Load GDT
+  set_gdtr(gdtr);
+
+  // Load segment selectors
+  set_cs(gdt_krn_seg_sel(code_index));
+
+  set_ds(gdt_krn_seg_sel(data_index));
+  set_es(gdt_krn_seg_sel(data_index));
+  set_ss(gdt_krn_seg_sel(data_index));
+  set_fs(gdt_krn_seg_sel(data_index));
+  set_gs(gdt_krn_seg_sel(data_index));
 }
 
 
@@ -62,5 +94,7 @@ void print_gdt()
 /* Main TP function. */
 void tp()
 {
+  print_gdt();
+  init_gdt();
   print_gdt();
 }
