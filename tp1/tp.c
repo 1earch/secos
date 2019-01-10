@@ -1,15 +1,16 @@
 /* GPLv2 (c) Airbus */
 #include <debug.h>
 #include <info.h>
-
 #include <segmem.h>
+#include <string.h>
 
 extern info_t *info;
 
-seg_desc_t GDT[3];
+seg_desc_t GDT[4];
 
 #define code_index 1
 #define data_index 2
+#define extra_index 3
 
 
 /* Prints the current registered GDT. */
@@ -49,17 +50,21 @@ void encode_gdt_entry(seg_desc_t* desc, uint32_t base, uint32_t limit, uint64_t 
   desc->limit_1 = limit & 0xFFFF;
   desc->limit_2 = (limit >> 16) & 0xF;
 
-  desc->type = type;  // Segment type
-  desc->dpl  = dpl;   // descriptor privilege level
+  desc->type = type;    // Segment type
+  desc->dpl  = dpl;     // descriptor privilege level
 
-  desc->s = 1;        // 1, ie code or data
-  desc->p = 1;        // Segment present
-  desc->l = 0;        // Not 64-bit mode segment
-  desc->d = 1;        // 32-bit segment
-  desc->g = 1;        // Granularity => pages of 4kB
-  desc->avl = 0;      // Not available for use by system software
+  desc->s = 1;          // 1, ie code or data
+  desc->p = 1;          // Segment present
+  desc->l = 0;          // Not 64-bit mode segment
+  desc->d = 1;          // 32-bit segment
+  if (limit == 0xFFFFF)
+    desc->g = 1;        // Granularity => pages of 4kB
+  else
+    desc->g = 0;        // Granularity => relative to limit?
+  desc->avl = 0;        // Not available for use by system software
 }
 
+/* GDT initialization. */
 void init_gdt()
 {
   gdt_reg_t gdtr;
@@ -71,6 +76,8 @@ void init_gdt()
   encode_gdt_entry(&GDT[code_index], 0, 0xFFFFF, SEG_DESC_CODE_XR, 0);
   //   - Init data segment (base=0, limit=max, type=data_rw, dpl=ring0)
   encode_gdt_entry(&GDT[data_index], 0, 0xFFFFF, SEG_DESC_DATA_RW, 0);
+  //   - Empty last segment
+  GDT[extra_index].raw = 0ULL;
 
   // Configure gdtr new value
   gdtr.limit = sizeof(GDT) - 1;
@@ -90,6 +97,25 @@ void init_gdt()
 }
 
 
+/* Work with registered segment. */
+void work()
+{
+  char src[64];
+  char *dst = 0;
+
+  memset(src, 0xff, 64);
+  debug("\nmemset OK!\n");
+
+  // Create extra segment (base=0x600000, limit=32, type=data_rw, dpl=ring0)
+  encode_gdt_entry(&GDT[extra_index], 0x600000, 32, SEG_DESC_DATA_RW, 0);
+  set_es(gdt_krn_seg_sel(extra_index));
+
+  _memcpy8(dst, src, 32);
+  debug("memcpy8 32 OK!\n");
+  _memcpy8(dst, src, 64);
+  debug("memcpy8 64 OK!\n");
+}
+
 
 /* Main TP function. */
 void tp()
@@ -97,4 +123,5 @@ void tp()
   print_gdt();
   init_gdt();
   print_gdt();
+  work();
 }

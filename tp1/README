@@ -67,4 +67,9 @@ nouveau descripteur de données. Puis exécutez le code suivant:
 Que se passe-t-il ? Pourquoi n'y a-t-il pas de faute mémoire alors que
 le pointeur "dst" est NULL ?
 
+=> dst, adresse relative à "es" => ok
+
+
 Effectuez à présent une copie de 64 octets ? Que se passe-t-il ?
+
+=> Ko car dépassement de segment
