@@ -37,11 +37,11 @@ void tp()
 
     debug("  [mem BEGINNING\tLENGTH]\t\tTYPE\n");
     while (mbi_entry < end) {
-      debug("  [mem 0x%llx\t", mbi_entry->addr);
+      debug("  [mem 0x%x\t", mbi_entry->addr);
       if (mbi_entry->addr < 0x1000000)
         debug("\t");
 
-      debug("0x%llx]\t", mbi_entry->len);
+      debug("0x%x]\t", mbi_entry->len);
       if (mbi_entry->len < 0x10000)
         debug("\t");
 
