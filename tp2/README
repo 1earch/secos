@@ -70,6 +70,9 @@ plus de faute et rende la main à la fonction "tp()":
 3.6 - Affichez l'EIP sauvegardé dans la pile au moment où #BP est
 générée. A quelle adresse cela correspond-il ?
 
+=> correspond à l'adresse de l'instruction int3
+
+
 3.7 - Affichez un message de debug dans la fonction "bp_trigger()"
 après le déclenchement du breakpoint. Que constatez-vous ? Essayez de
 corriger le problème afin que le message s'affiche correctement.
