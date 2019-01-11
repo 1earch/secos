@@ -37,6 +37,9 @@ d'interruptions de haut niveau de notre noyau "intr_hdlr".
 
 2 - Activez les interruptions dans une boucle infinie. Que constatez-vous ?
 
+=> On observe une multitude d'interruptions #32 (pic)
+
+
 3 - Gestion furtive des breakpoints #BP (Breakpoint Exception). Le but
 est de ne pas modifier "intr_hdlr" mais d'intercepter les #BP en amont
 depuis "tp.c".

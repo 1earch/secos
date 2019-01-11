@@ -4,6 +4,15 @@
 
 extern info_t *info;
 
+/* Enable interrupts. */
+void test_irq()
+{
+  while(1)
+    __asm__("sti");
+}
+
+
 void tp()
 {
+  //test_irq();
 }
