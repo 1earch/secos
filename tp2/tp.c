@@ -20,6 +20,9 @@ void test_irq()
 void bp_handler()
 {
   debug("Breakpoint reached!\n");
+
+  // iret because interruption
+  asm volatile ("leave; iret");
 }
 
 /* #BP triggerer. */
