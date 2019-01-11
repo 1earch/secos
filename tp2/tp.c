@@ -19,12 +19,18 @@ void test_irq()
 /* #BP handler. */
 void bp_handler()
 {
+  // Save context
+  asm volatile ("pusha");
+
   debug("Breakpoint reached!\n");
 
   // Display saved eip
   uint32_t saved_eip;
   asm volatile ("mov 4(%%ebp), %0" : "=r" (saved_eip) :: );
   debug("Saved EIP: 0x%x\n", saved_eip);
+
+  // Restore context
+  asm volatile ("popa");
 
   // iret because interruption
   asm volatile ("leave; iret");
@@ -34,6 +40,7 @@ void bp_handler()
 void bp_trigger()
 {
   asm volatile ("int3");
+  debug("Breakpoint already reached!\n");
 }
 
 
