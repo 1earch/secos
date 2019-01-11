@@ -56,6 +56,9 @@ grâce à l'instruction "int3".
 d'appeler "bp_handler()" la place du trampoline déjà installé. Faites un
 appel explicite à "bp_trigger()" dans "tp()". Que constatez-vous ?
 
+=> À la sortie de la bp_handler, il y a une erreur.
+
+
 3.5 - Modifiez la fonction "bp_handler"() afin que le noyau ne génère
 plus de faute et rende la main à la fonction "tp()":
  - pensez à la pile au moment de l'arrivée de l'interruption
