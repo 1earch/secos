@@ -12,7 +12,7 @@ extern int_desc_t IDT[IDT_NR_DESC];
 void test_irq()
 {
   while(1)
-    __asm__("sti");
+    asm volatile ("sti");
 }
 
 
@@ -25,7 +25,7 @@ void bp_handler()
 /* #BP triggerer. */
 void bp_trigger()
 {
-  __asm__("int3");
+  asm volatile ("int3");
 }
 
 
