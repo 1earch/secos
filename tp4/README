@@ -74,6 +74,10 @@ Questions:
 
 3 - Activez la pagination (cr0). Que se passe-t-il ? Pouquoi ?
 
+=> Il y a une triple faute donc redémarrage immédiat de la machine.
+   C'est dû au fait qu'aucune entrée de la PGD n'est valide.
+
+
 4 - Comme pour le PGD, allouez une PTB (pte32_t*) à l'adresse
 0x601000.
 
