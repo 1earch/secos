@@ -20,8 +20,7 @@ void tp()
   debug("  .. done!\n");
 
   debug("Updating cr3 with this address...\n");
-  cr3.addr = (uint32_t) pgd;
-  set_cr0(cr3);
+  set_cr3((uint32_t) pgd);
   debug("  .. done!\n");
 
   debug("Activating cr0.pg...\n");
