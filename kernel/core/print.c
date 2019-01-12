@@ -130,10 +130,12 @@ static char __hextable[] = {'0','1','2','3','4','5','6','7',
                             '8','9','a','b','c','d','e','f'};
 
 size_t uint64_to_hex(buffer_t *buf, size_t len,
-                     uint64_t value, size_t precision)
+                     uint64_t value, size_t precision, char padding)
 {
    char   rep[sizeof(uint64_t)*2];
    size_t sz, rsz = 0;
+   bool_t isz = (value == 0);
+   char   computed_char = padding;
 
    if(!precision || precision > 16)
       precision = -1;
@@ -148,15 +150,57 @@ size_t uint64_to_hex(buffer_t *buf, size_t len,
 
    sz = rsz;
    while(rsz--)
-      __buf_add(buf, len, rep[rsz]);
+   {
+      // If (value isn't zero
+      //     && last char was 'padding'
+      //     && char to be printed == '0'
+      //     && padding indicated
+      //  => add padding
+      if (!isz && computed_char == padding && rep[rsz] == '0' && padding != 0)
+      {
+        computed_char = padding;
+      }
+      else
+      {
+        computed_char = rep[rsz];
+      }
+
+      __buf_add(buf, len, computed_char);
+   }
 
    return sz;
 }
 
 static inline void __format_add_hex(buffer_t *buf, size_t len,
-                                    uint64_t value, size_t precision)
+                                    uint64_t value,
+                                    size_t default_precision, size_t precision,
+                                    char padding)
 {
-   uint64_to_hex(buf, len, value, precision);
+   size_t real_precision;
+   char real_padding;
+
+   if (padding != 0 && precision != 0)
+   {
+     real_precision = precision;
+     real_padding   = padding;
+   }
+   else if (padding != 0 && precision == 0)
+   {
+     real_precision = default_precision;
+     real_padding   = padding;
+   }
+   else if (padding == 0 && precision != 0)
+   {
+     real_precision = precision;
+     real_padding   = ' ';        // ie default padding
+   }
+   else
+   {
+     real_precision = 0;
+     real_padding   = 0;
+   }
+
+   uint64_to_hex(buf, len, value, real_precision, real_padding);
 }
 
 size_t __vsnprintf(char *buffer, size_t len,
@@ -166,6 +210,9 @@ size_t __vsnprintf(char *buffer, size_t len,
    size_t   size;
    char     c;
    bool_t   interp, lng;
+
+   uint32_t precision;
+   char     padding;
 
    buf.data.str = buffer;
    buf.sz = 0;
@@ -237,7 +284,7 @@ size_t __vsnprintf(char *buffer, size_t len,
             if(c == 'u')
                __format_add_udec(&buf, len, value);
             else
-               __format_add_hex(&buf, len, value, 0);
+               __format_add_hex(&buf, len, value, (lng?16:8), precision, padding);
 
             // force size to 64 bits
          } else if(c == 'D'){
@@ -245,16 +292,27 @@ size_t __vsnprintf(char *buffer, size_t len,
             __format_add_idec(&buf, len, value);
          } else if(c == 'X'){
             uint64_t value = va_arg(params, uint64_t);
-            __format_add_hex(&buf, len, value, 0);
+            __format_add_hex(&buf, len, value, 16, precision, padding);
 
             // '0x'%lx
          } else if(c == 'p'){
             uint64_t value = va_arg(params, uint32_t);
             __format_add_str(&buf, len, "0x");
-            __format_add_hex(&buf, len, value, 0);
+            __format_add_hex(&buf, len, value, 8, precision, padding);
 
             // ignore padding, precision ...
          } else if (c >= '0' && c <= '9') {
+            if (precision == 0 && c == '0')
+            {
+               padding = '0';
+            }
+            precision = precision*10 + (c - '0');
+            interp = true;
+            continue;
+
+            // space or dot for padding
+         } else if (c == ' ' || c == '.') {
+            padding = c;
             continue;
 
             // escaped '%'
@@ -273,6 +331,9 @@ size_t __vsnprintf(char *buffer, size_t len,
       {
          interp = true;
          size = 4;
+
+         precision = 0;
+         padding = 0;
       }
       else
          __buf_add(&buf, len, c);
