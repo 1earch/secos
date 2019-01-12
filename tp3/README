@@ -65,9 +65,14 @@ démarrer une tâche en ring 3 ?
    du ring0. Pour démarrer une tâche ring3, le noyau doit donc utiliser
    une interruption
 
+
 3.4 - Essayez de faire s'exécuter la fonction "userland()" en ring3
 avec une autre méthode (indice "iret"). Analysez la faute produite
 suite à son exécution. Est-ce normal ?
+
+=> On obtient une erreur de TSS. Normal car elle est consultée à chaque
+   changement de niveau de privilège !
+
 
 Bonus - Pour les plus courageux, essayez d'écrire une API vous
 permettant de créer une tâche ring3, d'exécuter une fonction en ring3

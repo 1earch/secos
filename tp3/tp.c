@@ -130,6 +130,21 @@ void work()
   /*userland_far_pointer.offset = (uint32_t) userland;*/
   /*userland_far_pointer.segment = gdt_usr_seg_sel(C3_IDX);*/
   /*farjump(userland_far_pointer);*/
+
+  // Go to userland
+  asm volatile (
+      "push %0\n"       // ss3
+      "push %%esp\n"    // esp3
+      "pushf\n"         // eflags
+      "push %1\n"       // cs3
+      "push %2\n"       // new eip = @userland
+      "iret"
+      ::
+        "i" (gdt_usr_seg_sel(D3_IDX)),
+        "i" (gdt_usr_seg_sel(C3_IDX)),
+        "r" (&userland)
+      :
+      );
 }
 
 
