@@ -2,16 +2,20 @@
 #include <debug.h>
 #include <info.h>
 #include <segmem.h>
+#include <gpr.h>
 
 extern info_t *info;
 
 
-seg_desc_t GDT[5];
+seg_desc_t GDT[6];
+tss_t TSS;
 
-#define C0_IDX 1
-#define D0_IDX 2
-#define C3_IDX 3
-#define D3_IDX 4
+
+#define C0_IDX  1
+#define D0_IDX  2
+#define C3_IDX  3
+#define D3_IDX  4
+#define TSS_IDX 5
 
 /* Prints the current registered GDT. */
 void print_gdt()
@@ -60,6 +64,30 @@ void encode_gdt_entry(seg_desc_t* desc, uint32_t base, uint32_t limit, uint64_t 
     desc->g = 1;        // Granularity => pages of 4kB
   else
     desc->g = 0;        // Granularity => relative to limit?
+  desc->avl = 0;        // Not available for use by system software
+}
+
+
+/* Encode a GDT TSS entry. */
+void encode_gdt_tss_entry(seg_desc_t* desc, offset_t base, uint64_t type)
+{
+  desc->raw = 0ULL;
+
+  desc->base_1 = base & 0xFFFF;
+  desc->base_2 = (base >> 16) & 0xFFFF;
+  desc->base_3 = (base >> 24) & 0xFF;
+
+  desc->limit_1 = sizeof(tss_t) & 0xFFFF;
+  desc->limit_2 = (sizeof(tss_t) >> 16) & 0xF;
+
+  desc->type = type;    // Segment type
+  desc->dpl  = 0;       // descriptor privilege level
+
+  desc->s = 0;          // 0, ie system
+  desc->p = 1;          // Segment present
+  desc->l = 0;          // Not 64-bit mode segment
+  desc->d = 0;          // 16-bit segment
+  desc->g = 0;          // Granularity => relative to limit?
   desc->avl = 0;        // Not available for use by system software
 }
 
@@ -130,6 +158,17 @@ void work()
   /*userland_far_pointer.offset = (uint32_t) userland;*/
   /*userland_far_pointer.segment = gdt_usr_seg_sel(C3_IDX);*/
   /*farjump(userland_far_pointer);*/
+
+  // Configure TSS
+  TSS.s0.esp = get_esp();
+  TSS.s0.ss  = gdt_krn_seg_sel(D0_IDX);
+
+  // Register TSS in GDT
+  encode_gdt_tss_entry(&GDT[TSS_IDX], (offset_t) &TSS, SEG_DESC_SYS_TSS_AVL_32);
+
+  // Register TSS in tr
+  set_tr(gdt_krn_seg_sel(TSS_IDX));
+  debug("TSS loaded!\n");
 
   // Go to userland
   asm volatile (
