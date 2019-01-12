@@ -42,7 +42,16 @@ sélecteurs qui pointent vers les descripteurs ring 3.
 
 3.1 - Que se passe-t-il lors du chargement de DS/ES/FS/GS ?
 
+=> Aucun problème...
+
+
 3.2 - Que se passe-t-il lors du chargement de SS ?
+
+=> #GP levée sur :    mov %eax, %ss
+   car on tente de charger (pour ss) un segment ayant un niveau de
+   privilège différent de celui indiqué dans cs
+   => C'est pour ça que l'on doit mettre en place une TSS
+
 
 3.3 - Essayez d'effectuer un "far jump" vers la fonction
 "userland()". Pour cela il faut charger dans "CS" le sélecteur de code
@@ -51,6 +60,10 @@ utiliser le type "fptr32_t" et la fonction "farjump()" de notre noyau.
 
 Quelles conclusions en tirez-vous ? Comment un noyau fait-il pour
 démarrer une tâche en ring 3 ?
+
+=> Cela ne fonctionne pas : on tente d'accéder à du code ring3 depuis
+   du ring0. Pour démarrer une tâche ring3, le noyau doit donc utiliser
+   une interruption
 
 3.4 - Essayez de faire s'exécuter la fonction "userland()" en ring3
 avec une autre méthode (indice "iret"). Analysez la faute produite

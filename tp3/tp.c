@@ -99,10 +99,37 @@ void init_gdt()
 }
 
 
+/* Userland function. */
+void userland()
+{
+   asm volatile ("mov %eax, %cr0");
+}
+
+
 /* Work with registered segment. */
 void work()
 {
-  debug("\nNothing to do for now...\n");
+  debug("\nLoading ring3 segment selectors...\n");
+
+  // Load segment selectors
+  set_ds(gdt_usr_seg_sel(D3_IDX));
+  debug("  ... ds loaded with: %p\n", gdt_usr_seg_sel(D3_IDX));
+  set_es(gdt_usr_seg_sel(D3_IDX));
+  debug("  ... es loaded with: %p\n", gdt_usr_seg_sel(D3_IDX));
+  set_fs(gdt_usr_seg_sel(D3_IDX));
+  debug("  ... fs loaded with: %p\n", gdt_usr_seg_sel(D3_IDX));
+  set_gs(gdt_usr_seg_sel(D3_IDX));
+  debug("  ... gs loaded with: %p\n", gdt_usr_seg_sel(D3_IDX));
+
+  // Load SS => #GP
+  /*set_ss(gdt_usr_seg_sel(D3_IDX));*/
+  /*debug("  ... ss loaded with: %p\n", gdt_usr_seg_sel(D3_IDX));*/
+
+  // Farjmp to ring3 impossible because from ring0
+  /*fptr32_t userland_far_pointer;*/
+  /*userland_far_pointer.offset = (uint32_t) userland;*/
+  /*userland_far_pointer.segment = gdt_usr_seg_sel(C3_IDX);*/
+  /*farjump(userland_far_pointer);*/
 }
 
 
