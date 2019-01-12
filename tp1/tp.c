@@ -21,7 +21,7 @@ void print_gdt()
 
   // Get GDT
   get_gdtr(gdtr);
-  debug("\nGDTR points on 0x%x (so GDT is here)\n", gdtr);
+  debug("\nGDTR points on 0x%x (so GDT is here)\n", gdtr.addr);
 
   // Print GDT content
   n = gdtr.limit / sizeof(seg_desc_t);
