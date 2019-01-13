@@ -152,8 +152,8 @@ void userland()
 {
   debug("\nIn userland!!!\n");
 
-  // Print secos-***-*** (c) Airbus
-  asm volatile ("mov $0x304bd1, %esi; int $48");
+  // Dump kernel stack
+  asm volatile ("mov $0x303020, %esi; int $48");
 
   debug("\nHalted!\n");
   while (true);
