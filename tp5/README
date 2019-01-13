@@ -12,6 +12,9 @@ fonction.
 1 - Essayez de déclencher l'interruption "48" de manière
 logicielle. Que se passe-t-il ?
 
+=> #GP car le DPL n'est pas le bon dans l'IDT (entrée 48).
+
+
 2 - Corrigez le problème de sorte qu'il soit possible d'appeler
 l'interruption "48" en ring 3. Inspirez-vous du TP3, attention aux
 piles user/kernel ! Placez un breakpoint sur l'appel à l'interruption
