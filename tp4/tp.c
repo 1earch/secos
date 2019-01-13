@@ -5,6 +5,15 @@
 #include <cr.h>
 #include <pagemem.h>
 
+#define PGD_ADDR        0x600000
+#define PTB1_ADDR       0x601000
+#define PTB2_ADDR       0x602000
+#define PTB3_ADDR       0x603000
+#define PGD_PAGED_ADDR  0xC0000000
+#define SHARED_VADDR1   0x700000
+#define SHARED_VADDR2   0x7ff000
+#define SHARED_ADDR     0x2000
+
 extern info_t *info;
 
 void show_cr3()
@@ -22,9 +31,9 @@ void init_identity_mapping()
   uint32_t i;
 
   // Allocate PGD and PGT
-  pde32_t* pgd  = (pde32_t*) 0x600000;
-  pte32_t* ptb1 = (pte32_t*) 0x601000;
-  pte32_t* ptb2 = (pte32_t*) 0x602000;
+  pde32_t* pgd  = (pde32_t*) PGD_ADDR;
+  pte32_t* ptb1 = (pte32_t*) PTB1_ADDR;
+  pte32_t* ptb2 = (pte32_t*) PTB2_ADDR;
 
   // PTB1 identity-mapping
   for (i=0; i < PTE32_PER_PT; i++)
@@ -59,22 +68,36 @@ void init_identity_mapping()
       debug("PTB[%d]: %p\n", i, ptb1[i].addr);
 
 
-  // PTB3 mapping 0xC000.0000:
-  pte32_t* ptb3 = (pte32_t*) 0x603000;
-  uint32_t ptb3_idx     = pt32_idx(0xC0000000);
-  uint32_t pgd_ptb3_idx = pd32_idx(0xC0000000);
+  // PTB3 mapping 0xC000.0000
+  pte32_t* ptb3 = (pte32_t*) PTB3_ADDR;
+  uint32_t ptb3_idx     = pt32_idx(PGD_PAGED_ADDR);
+  uint32_t pgd_ptb3_idx = pd32_idx(PGD_PAGED_ADDR);
 
   memset((void*) ptb3, 0, PAGE_SIZE);
   pg_set_entry(&pgd[pgd_ptb3_idx], PG_RW | PG_KRN, page_nr(ptb3));
   pg_set_entry(&ptb3[ptb3_idx], PG_RW | PG_KRN, page_nr(pgd));
 
   debug("\n");
-  debug("To map 0xC0000000 on PGD: PGD[%d] => PTB[%d] => %p\n", pgd_ptb3_idx, ptb3_idx, pgd);
+  debug("To map %p on PGD: PGD[%d] => PTB[%d] => %p\n", PGD_PAGED_ADDR, pgd_ptb3_idx, ptb3_idx, pgd);
 
   // Display a PGD entry
-  pde32_t* pgd_0xc = (pde32_t*) 0xc0000000;
+  pde32_t* pgd_0xc = (pde32_t*) PGD_PAGED_ADDR;
   for (i=0; i < 5; i++)
     debug("PGD[%d]: %p\n", i, pgd_0xc[i].addr);
+
+
+  // Shared memory
+  char* vstr1 = (char*) SHARED_VADDR1;
+  char* vstr2 = (char*) SHARED_VADDR2;
+
+  uint32_t ptb2_idx_vstr1 = pt32_idx(SHARED_VADDR1);
+  uint32_t ptb2_idx_vstr2 = pt32_idx(SHARED_VADDR2);
+  pg_set_entry(&ptb2[ptb2_idx_vstr1], PG_RW | PG_KRN, page_nr(SHARED_ADDR));
+  pg_set_entry(&ptb2[ptb2_idx_vstr2], PG_RW | PG_KRN, page_nr(SHARED_ADDR));
+
+  debug("\n");
+  debug("%p = %s\n", vstr1, vstr1);
+  debug("%p = %s\n", vstr2, vstr2);
 }
 
 void tp()
