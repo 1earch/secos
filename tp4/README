@@ -93,6 +93,10 @@ cela il va falloir:
 5 - Une fois la pagination activée, essayez d'afficher le contenu
 d'une entrée de votre PTB. Que se passe-t-il ?
 
+=> #PF, parce qu'on accède à l'entrée d'indice 1 dans la PGD.
+   Cette entrée n'existe pas...
+
+
 6 - Trouvez la solution pour être capable de modifier les entrées de
 votre PTB une fois la pagination activée.
 
