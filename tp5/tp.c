@@ -142,7 +142,8 @@ void init_gdt()
 /* Syscall handler. */
 void __regparm__(1) syscall_handler(int_ctx_t *ctx)
 {
-   debug("SYSCALL eax = %p\n", ctx->gpr.eax);
+   /*debug("SYSCALL eax = %p\n", ctx->gpr.eax);*/
+   debug("SYSCALL print esi = %s\n", ctx->gpr.esi);
 }
 
 
@@ -150,7 +151,10 @@ void __regparm__(1) syscall_handler(int_ctx_t *ctx)
 void userland()
 {
   debug("\nIn userland!!!\n");
-  asm volatile ("int $48");
+
+  // Print secos-***-*** (c) Airbus
+  asm volatile ("mov $0x304bd1, %esi; int $48");
+
   debug("\nHalted!\n");
   while (true);
 }
