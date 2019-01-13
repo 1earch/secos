@@ -98,6 +98,19 @@ void init_identity_mapping()
   debug("\n");
   debug("%p = %s\n", vstr1, vstr1);
   debug("%p = %s\n", vstr2, vstr2);
+
+
+  // 1st entry deletion: we must invalidate TLBs
+  memset((void*) PGD_PAGED_ADDR, 0, sizeof(pde32_t));
+  // invalidate(pgd);
+  //or
+  // set_cr3((uint32_t) PGD_ADDR);
+
+  // Display a PTB entry
+  debug("\n");
+  for (i=0; i < 5; i++)
+    if (pg_present(&ptb1[i]))
+      debug("PTB[%d]: %p\n", i, ptb1[i].addr);
 }
 
 void tp()
