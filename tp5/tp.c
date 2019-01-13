@@ -128,8 +128,8 @@ void init_gdt()
 }
 
 
-/* Int 48 handler. */
-void syscall_isr()
+/* Int 48 handler. => now managed in idt.s */
+/*void syscall_isr()
 {
    asm volatile (
       "leave ; pusha        \n"
@@ -137,7 +137,7 @@ void syscall_isr()
       "call syscall_handler \n"
       "popa ; iret"
       );
-}
+}*/
 
 /* Syscall handler. */
 void __regparm__(1) syscall_handler(int_ctx_t *ctx)
@@ -180,15 +180,16 @@ void work()
   set_tr(gdt_krn_seg_sel(TSS_IDX));
   debug("TSS loaded with: %p\n\n", gdt_krn_seg_sel(TSS_IDX));
 
-  // Configure int 48 DPL and handler
+  // Configure int 48 DPL
   idt_reg_t idtr;
   get_idtr(idtr);
   int_desc_t* int48 = &idtr.desc[48];
   int48->dpl = 3;
 
-  raw32_t syscall_isr_addr = { .raw = (uint32_t) syscall_isr };
-  int48->offset_1 = syscall_isr_addr.wlow;
-  int48->offset_2 = syscall_isr_addr.whigh;
+  // Configure int 48 handler (now managed in idt.s)
+  /*raw32_t syscall_isr_addr = { .raw = (uint32_t) syscall_isr };*/
+  /*int48->offset_1 = syscall_isr_addr.wlow;*/
+  /*int48->offset_2 = syscall_isr_addr.whigh;*/
 
   // Go to userland
   asm volatile (
