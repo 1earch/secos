@@ -53,8 +53,28 @@ void init_identity_mapping()
   debug("  .. done!\n");
 
   // Display a PTB entry
-  for (i=0; i < 10; i++)
-    debug("PTB[%d]: %p\n", i, ptb1[i].addr);
+  debug("\n");
+  for (i=0; i < 5; i++)
+    if (pg_present(&ptb1[i]))
+      debug("PTB[%d]: %p\n", i, ptb1[i].addr);
+
+
+  // PTB3 mapping 0xC000.0000:
+  pte32_t* ptb3 = (pte32_t*) 0x603000;
+  uint32_t ptb3_idx     = pt32_idx(0xC0000000);
+  uint32_t pgd_ptb3_idx = pd32_idx(0xC0000000);
+
+  memset((void*) ptb3, 0, PAGE_SIZE);
+  pg_set_entry(&pgd[pgd_ptb3_idx], PG_RW | PG_KRN, page_nr(ptb3));
+  pg_set_entry(&ptb3[ptb3_idx], PG_RW | PG_KRN, page_nr(pgd));
+
+  debug("\n");
+  debug("To map 0xC0000000 on PGD: PGD[%d] => PTB[%d] => %p\n", pgd_ptb3_idx, ptb3_idx, pgd);
+
+  // Display a PGD entry
+  pde32_t* pgd_0xc = (pde32_t*) 0xc0000000;
+  for (i=0; i < 5; i++)
+    debug("PGD[%d]: %p\n", i, pgd_0xc[i].addr);
 }
 
 void tp()
