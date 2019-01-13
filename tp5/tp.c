@@ -3,6 +3,7 @@
 #include <info.h>
 #include <segmem.h>
 #include <gpr.h>
+#include <intr.h>
 
 extern info_t *info;
 
@@ -127,9 +128,28 @@ void init_gdt()
 }
 
 
+/* Int 48 handler. */
+void syscall_isr()
+{
+   asm volatile (
+      "leave ; pusha        \n"
+      "mov %esp, %eax      \n"
+      "call syscall_handler \n"
+      "popa ; iret"
+      );
+}
+
+/* Syscall handler. */
+void __regparm__(1) syscall_handler(int_ctx_t *ctx)
+{
+   debug("SYSCALL eax = %p\n", ctx->gpr.eax);
+}
+
+
 /* Userland function. */
 void userland()
 {
+  debug("\nIn userland!!!\n");
   asm volatile ("int $48");
   debug("\nHalted!\n");
   while (true);
@@ -160,11 +180,15 @@ void work()
   set_tr(gdt_krn_seg_sel(TSS_IDX));
   debug("TSS loaded with: %p\n\n", gdt_krn_seg_sel(TSS_IDX));
 
-  // Configure int 48 DPL
+  // Configure int 48 DPL and handler
   idt_reg_t idtr;
   get_idtr(idtr);
   int_desc_t* int48 = &idtr.desc[48];
   int48->dpl = 3;
+
+  raw32_t syscall_isr_addr = { .raw = (uint32_t) syscall_isr };
+  int48->offset_1 = syscall_isr_addr.wlow;
+  int48->offset_2 = syscall_isr_addr.whigh;
 
   // Go to userland
   asm volatile (
