@@ -134,7 +134,6 @@ size_t uint64_to_hex(buffer_t *buf, size_t len,
 {
    char   rep[sizeof(uint64_t)*2];
    size_t sz, rsz = 0;
-   bool_t isz = (value == 0);
    char   computed_char = padding;
 
    if(!precision || precision > 16)
@@ -151,12 +150,12 @@ size_t uint64_to_hex(buffer_t *buf, size_t len,
    sz = rsz;
    while(rsz--)
    {
-      // If (value isn't zero
+      // If (we aren't putting the last character => workaround for zero value
       //     && last char was 'padding'
       //     && char to be printed == '0'
       //     && padding indicated
       //  => add padding
-      if (!isz && computed_char == padding && rep[rsz] == '0' && padding != 0)
+      if (rsz && computed_char == padding && rep[rsz] == '0' && padding != 0)
       {
         computed_char = padding;
       }
